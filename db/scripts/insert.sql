@@ -1,4 +1,3 @@
--- Ce script doit être lancé à l'exécution du projet
 -- =============================================================================
 -- BIBLIOTHÈQUE — Script SQL PostgreSQL
 -- Héritage natif PostgreSQL :
@@ -78,8 +77,7 @@ CREATE TABLE bibliothecaires (
 CREATE TABLE ouvrages (
     id           SERIAL PRIMARY KEY,
     titre        VARCHAR(255) NOT NULL,
-    caution      DOUBLE PRECISION NOT NULL DEFAULT 0.0,
-    emplacement_id INT REFERENCES emplacements(id)
+    caution      DOUBLE PRECISION NOT NULL DEFAULT 0.0
 );
 
 -- Livre hérite d'ouvrage
@@ -90,8 +88,7 @@ CREATE TABLE livres (
 
 -- Revue hérite d'ouvrage
 CREATE TABLE revues (
-    numero        INT  NOT NULL,
-    date_parution DATE NOT NULL
+    numero INT NOT NULL
 ) INHERITS (ouvrages);
 
 
@@ -105,7 +102,7 @@ CREATE TABLE exemplaires (
     date_debut_emprunt  DATE,
     date_fin_emprunt    DATE,
     code_barre          VARCHAR(50)      NOT NULL UNIQUE,
-    delai_emprunt_jours INT              NOT NULL DEFAULT 15,
+    delai_emprunt_jours INT              NOT NULL DEFAULT 14,
     ouvrage_id          INT              NOT NULL,  -- référence logique (héritage)
     emplacement_id      INT              REFERENCES emplacements(id),
     emprunteur_id       INT              -- FK vers utilisateurs (logique)
@@ -121,7 +118,7 @@ CREATE TABLE utilisateurs (
     nom              VARCHAR(100)     NOT NULL,
     prenom           VARCHAR(100)     NOT NULL,
     numero_telephone VARCHAR(20),
-    solde_caution    DOUBLE PRECISION NOT NULL DEFAULT 20.0,
+    solde_caution    DOUBLE PRECISION NOT NULL DEFAULT 0.0,
     caution_totale   DOUBLE PRECISION NOT NULL DEFAULT 20.0,
     login            VARCHAR(50)      NOT NULL UNIQUE,
     mot_de_passe     VARCHAR(255)     NOT NULL,
@@ -149,102 +146,142 @@ CREATE TABLE enseignants (
 -- Catégories
 -- -----------------------------------------------------------------------------
 INSERT INTO categories (nom) VALUES
-    ('Littérature'),
+    ('Informatique'),
     ('Sciences'),
-    ('Consommation');
+    ('Littérature'),
+    ('Histoire'),
+    ('Mathématiques');
 
 -- -----------------------------------------------------------------------------
 -- Emplacements
 -- -----------------------------------------------------------------------------
 INSERT INTO emplacements (numero_travee, numero_etagere, niveau, categorie_id) VALUES
-    (1, 1, 1, 1),  -- Littérature
+    (1, 1, 1, 1),  -- Informatique
+    (1, 2, 1, 1),  -- Informatique
     (2, 1, 1, 2),  -- Sciences
-    (2, 2, 1, 3);  -- Consommation
+    (2, 2, 1, 3),  -- Littérature
+    (3, 1, 2, 4),  -- Histoire
+    (3, 2, 2, 5);  -- Mathématiques
 
 -- -----------------------------------------------------------------------------
 -- Auteurs
 -- -----------------------------------------------------------------------------
 INSERT INTO auteurs (nom, prenom) VALUES
-    ('Tolkien',  'J.R.R.'),
-    ('Anonyme',  'Collectif');
+    ('Kernighan', 'Brian'),
+    ('Ritchie',   'Dennis'),
+    ('Donovan',   'Alan'),
+    ('Kernighan', 'Brian'),
+    ('Martin',    'Robert C.'),
+    ('Zola',      'Émile'),
+    ('Hugo',      'Victor'),
+    ('Cormen',    'Thomas H.');
 
 -- -----------------------------------------------------------------------------
--- Livres
+-- Ouvrages — Livres (INSERT direct dans livres, héritage auto dans ouvrages)
 -- -----------------------------------------------------------------------------
-INSERT INTO livres (titre, caution, isbn, auteur_id, emplacement_id) VALUES
-    ('Le Seigneur des anneaux — La Communauté de l''anneau', 5.00, '978-2267011296', 1, 1),
-    ('Le Seigneur des anneaux — Les Deux Tours',             5.00, '978-2267011555', 1, 1),
-    ('Le Seigneur des anneaux — Le Retour du roi',           5.00, '978-2267011777', 1, 1),
-    ('Les Mille et Une Nuits',                               3.00, '978-2070379583', 2, 1);
+INSERT INTO livres (titre, caution, isbn, auteur_id) VALUES
+    ('The C Programming Language',       5.00, '978-0131103627', 1),
+    ('The Go Programming Language',      5.00, '978-0134190440', 3),
+    ('Clean Code',                       5.00, '978-0132350884', 5),
+    ('Introduction to Algorithms',      10.00, '978-0262033848', 8),
+    ('Germinal',                          3.00, '978-2070408597', 6),
+    ('Les Misérables',                    3.00, '978-2070409228', 7);
 
 -- -----------------------------------------------------------------------------
--- Revues
+-- Ouvrages — Revues
 -- -----------------------------------------------------------------------------
-INSERT INTO revues (titre, caution, numero, date_parution, emplacement_id) VALUES
-    ('60 millions de consommateurs', 2.00, 581, '2024-01-01', 3),
-    ('60 millions de consommateurs', 2.00, 582, '2024-02-01', 3),
-    ('Science & Vie',                2.00, 1265, '2024-03-01', 2);
+INSERT INTO revues (titre, caution, numero) VALUES
+    ('Linux Magazine',      2.00,  258),
+    ('Pour la Science',     2.50,  551),
+    ('L''Histoire',         2.00,  512),
+    ('Programmez!',         2.00,   95);
 
 -- -----------------------------------------------------------------------------
 -- Adresses
 -- -----------------------------------------------------------------------------
 INSERT INTO adresses (ville, code_postal, nom_rue, numero_rue) VALUES
-    ('Paris',   '75001', 'Rue de Rivoli',              '10'),  -- Jean Martin
-    ('Lyon',    '69001', 'Rue de la République',       '25'),  -- Marie Dupont
-    ('Nantes',  '44000', 'Rue du Général de Gaulle',   '7');   -- Pierre Roche
+    ('Paris',      '75001', 'Rue de Rivoli',       '10'),
+    ('Lyon',       '69001', 'Rue de la République','25'),
+    ('Nantes',     '44000', 'Rue du Général de Gaulle', '7'),
+    ('Bordeaux',   '33000', 'Allées de Tourny',    '3'),
+    ('Marseille',  '13001', 'La Canebière',         '42'),
+    ('Toulouse',   '31000', 'Rue du Taur',          '15');
 
 -- -----------------------------------------------------------------------------
 -- Départements
 -- -----------------------------------------------------------------------------
 INSERT INTO departements_ecole (nom) VALUES
-    ('Mathématiques'),
     ('Informatique'),
-    ('Physique');
+    ('Mathématiques'),
+    ('Physique'),
+    ('Langues et Lettres'),
+    ('Sciences Humaines');
 
 -- -----------------------------------------------------------------------------
--- Bibliothécaire
+-- Bibliothécaires
 -- -----------------------------------------------------------------------------
 INSERT INTO bibliothecaires (nom, prenom, login, mot_de_passe) VALUES
-    ('Petit', 'Valérie', 'vpetit', 'mdp');
+    ('Dupont',  'Marie',   'mdupont',  'mdp'),
+    ('Lambert', 'Jacques', 'jlambert', 'mdp');
 
 -- -----------------------------------------------------------------------------
--- Particulier — insertion directe dans utilisateurs (ONLY)
--- -----------------------------------------------------------------------------
-INSERT INTO utilisateurs (nom, prenom, numero_telephone, solde_caution, login, mot_de_passe, date_de_naissance, email, adresse_id) VALUES
-    ('Martin', 'Jean', '0601020304', 20.00, 'jmartin', 'mdp', '1985-06-15', 'jean.martin@email.fr', 1);
-
--- -----------------------------------------------------------------------------
--- Étudiant
+-- Utilisateurs — Etudiants (INSERT direct dans etudiants)
 -- -----------------------------------------------------------------------------
 INSERT INTO etudiants (nom, prenom, numero_telephone, solde_caution, login, mot_de_passe, date_de_naissance, email, adresse_id, annee_etude) VALUES
-    ('Dupont', 'Marie', '0607080910', 20.00, 'mdupont', 'mdp', '2002-03-20', 'marie.dupont@etud.fr', 2, 'L3');
+    ('Martin',   'Alice',   '0601020304', 0.00, 'amartin',   'mdp', '2002-03-15', 'alice.martin@etud.fr',   1, 'L3'),
+    ('Bernard',  'Lucas',   '0605060708', 0.00, 'lbernard',  'mdp', '2001-07-22', 'lucas.bernard@etud.fr',  2, 'M1'),
+    ('Petit',    'Emma',    '0609101112', 5.00, 'epetit',    'mdp', '2003-01-10', 'emma.petit@etud.fr',     3, 'L2'),
+    ('Robert',   'Noah',    '0613141516', 0.00, 'nrobert',   'mdp', '2000-11-05', 'noah.robert@etud.fr',    4, 'M2'),
+    ('Leroy',    'Chloé',   '0617181920', 2.50, 'cleroy',    'mdp', '2002-09-30', 'chloe.leroy@etud.fr',    5, 'L1');
 
 -- -----------------------------------------------------------------------------
--- Enseignant
+-- Utilisateurs — Enseignants (INSERT direct dans enseignants)
 -- -----------------------------------------------------------------------------
 INSERT INTO enseignants (nom, prenom, numero_telephone, solde_caution, login, mot_de_passe, date_de_naissance, email, adresse_id, departement_id) VALUES
-    ('Roche', 'Pierre', '0611121314', 20.00, 'proche', 'mdp', '1975-11-08', 'pierre.roche@univ.fr', 3, 1);
+    ('Moreau',   'Julien',  '0621222324', 0.00, 'jmoreau',   'mdp', '1978-04-12', 'julien.moreau@univ.fr',  6, 1),
+    ('Simon',    'Claire',  '0625262728', 0.00, 'csimon',    'mdp', '1985-08-19', 'claire.simon@univ.fr',   1, 2),
+    ('Girard',   'Pierre',  '0629303132', 0.00, 'pgirard',   'mdp', '1972-12-03', 'pierre.girard@univ.fr',  2, 3);
 
 -- -----------------------------------------------------------------------------
--- Exemplaires (1 par ouvrage)
+-- Exemplaires
+-- (ouvrage_id référence logiquement les ids insérés dans livres/revues)
+-- On récupère les ids via sous-requête sur le titre
 -- -----------------------------------------------------------------------------
-INSERT INTO exemplaires (est_emprunte, code_barre, delai_emprunt_jours, ouvrage_id) VALUES
-    -- La Communauté de l'anneau
-    (FALSE, 'EX-0001', 15, (SELECT id FROM livres WHERE isbn = '978-2267011296')),
-    -- Les Deux Tours
-    (FALSE, 'EX-0002', 15, (SELECT id FROM livres WHERE isbn = '978-2267011555')),
-    -- Le Retour du roi
-    (FALSE, 'EX-0003', 15, (SELECT id FROM livres WHERE isbn = '978-2267011777')),
-    -- Les Mille et Une Nuits — exemplaire 1
-    (FALSE, 'EX-0004', 15, (SELECT id FROM livres WHERE isbn = '978-2070379583')),
-    -- Les Mille et Une Nuits — exemplaire 2
-    (FALSE, 'EX-0008', 15, (SELECT id FROM livres WHERE isbn = '978-2070379583')),
-    -- 60 millions de consommateurs n°581
-    (FALSE, 'EX-0005',  7, (SELECT id FROM revues WHERE numero = 581)),
-    -- 60 millions de consommateurs n°582
-    (FALSE, 'EX-0006',  7, (SELECT id FROM revues WHERE numero = 582)),
-    -- Science & Vie n°1265
-    (FALSE, 'EX-0007',  7, (SELECT id FROM revues WHERE numero = 1265));
+INSERT INTO exemplaires (est_emprunte, code_barre, delai_emprunt_jours, ouvrage_id, emplacement_id) VALUES
+    -- The C Programming Language (2 exemplaires)
+    (FALSE, 'EX-0001', 14, (SELECT id FROM livres WHERE isbn = '978-0131103627'), 1),
+    (FALSE, 'EX-0002', 14, (SELECT id FROM livres WHERE isbn = '978-0131103627'), 1),
+    -- The Go Programming Language
+    (FALSE, 'EX-0003', 14, (SELECT id FROM livres WHERE isbn = '978-0134190440'), 2),
+    -- Clean Code
+    (FALSE, 'EX-0004', 21, (SELECT id FROM livres WHERE isbn = '978-0132350884'), 2),
+    -- Introduction to Algorithms
+    (FALSE, 'EX-0005', 21, (SELECT id FROM livres WHERE isbn = '978-0262033848'), 6),
+    -- Germinal
+    (FALSE, 'EX-0006', 14, (SELECT id FROM livres WHERE isbn = '978-2070408597'), 4),
+    -- Les Misérables
+    (FALSE, 'EX-0007', 14, (SELECT id FROM livres WHERE isbn = '978-2070409228'), 4),
+    -- Linux Magazine (2 exemplaires)
+    (FALSE, 'EX-0008',  7, (SELECT id FROM revues WHERE numero = 258), 1),
+    (FALSE, 'EX-0009',  7, (SELECT id FROM revues WHERE numero = 258), 1),
+    -- Pour la Science
+    (FALSE, 'EX-0010',  7, (SELECT id FROM revues WHERE numero = 551), 3),
+    -- L'Histoire
+    (FALSE, 'EX-0011',  7, (SELECT id FROM revues WHERE numero = 512), 5),
+    -- Programmez!
+    (FALSE, 'EX-0012',  7, (SELECT id FROM revues WHERE numero = 95),  1);
+
+-- -----------------------------------------------------------------------------
+-- Simulation d'un emprunt (Alice emprunte "The Go Programming Language")
+-- -----------------------------------------------------------------------------
+UPDATE exemplaires
+SET
+    est_emprunte       = TRUE,
+    date_debut_emprunt = CURRENT_DATE,
+    date_fin_emprunt   = CURRENT_DATE + INTERVAL '14 days',
+    emprunteur_id      = (SELECT id FROM etudiants WHERE login = 'amartin')
+WHERE code_barre = 'EX-0003';
+
 
 -- =============================================================================
 -- VÉRIFICATIONS RAPIDES
@@ -256,8 +293,6 @@ UNION ALL
 SELECT 'revues',           COUNT(*) FROM revues
 UNION ALL
 SELECT 'exemplaires',      COUNT(*) FROM exemplaires
-UNION ALL
-SELECT 'utilisateurs',     COUNT(*) FROM ONLY utilisateurs
 UNION ALL
 SELECT 'etudiants',        COUNT(*) FROM etudiants
 UNION ALL
